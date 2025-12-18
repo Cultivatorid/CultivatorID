@@ -1,0 +1,129 @@
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>CultivatorID – Premium</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070b14;--card:#0e1424;--gold:#d4af37;--muted:#9aa3c7}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Cinzel',serif;background:radial-gradient(circle at top,#111a33,#070b14);color:#eaeaf0}
+.container{max-width:820px;margin:auto;padding:40px}
+h1{text-align:center;color:var(--gold);letter-spacing:3px}
+.card{background:linear-gradient(145deg,#0e1424,#090d1a);border:1px solid rgba(212,175,55,.18);border-radius:22px;padding:30px;box-shadow:0 0 60px rgba(0,0,0,.8)}
+button{padding:14px 22px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--gold),#f5e7a2);color:#000;font-weight:700;cursor:pointer}
+select,input{width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#050916;color:#fff;margin-top:12px}
+.hidden{display:none}
+.multi label{display:block;margin:8px 0;color:var(--muted)}
+.desc{color:var(--muted);margin-top:10px}
+.result div{margin:6px 0}
+.motivation{margin-top:18px;font-style:italic;color:#f5e7a2}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>CULTIVATORID</h1><div class="card" id="s1">
+<h3>Nama Cultivator</h3>
+<input id="nama" placeholder="contoh: Ryuu">
+<button onclick="next()">Konfirmasi</button>
+</div><div class="card hidden" id="s2">
+<h3>Gender</h3>
+<select id="gender"><option>Cowo</option><option>Cewe</option></select>
+<button onclick="next()">Lanjut</button>
+</div><div class="card hidden" id="s3">
+<h3>Pilih Element</h3>
+<select id="element"></select>
+<div class="desc" id="edesc"></div>
+<button onclick="next()">Lanjut</button>
+</div><div class="card hidden" id="s4">
+<h3>Sifat Domain</h3>
+<p class="desc">Domain akan ditentukan <b>acak</b></p>
+<div class="multi" id="sifat"></div>
+<button onclick="next()">Lanjut</button>
+</div><div class="card hidden" id="s5">
+<h3>Tujuan Hidup</h3>
+<select id="goal"></select>
+<button onclick="next()">Lanjut</button>
+</div><div class="card hidden" id="s6">
+<h3>Ujian Takdir (Penentu Ras)</h3>
+<p>Lengkapi: "Kekuatan tanpa kendali membawa ____"</p>
+<input id="q1">
+<p>Jika kau diberi kekuatan mutlak, kau akan?</p>
+<input id="q2">
+<button onclick="generate()">Cek Kultivasi Kamu</button>
+</div><div class="card hidden" id="result">
+<h3>HASIL KULTIVASI</h3>
+<div class="result" id="out"></div>
+<div class="motivation" id="mot"></div>
+<div style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap">
+<button onclick="shareWA()">Share WhatsApp</button>
+<button onclick="shareIG()">Share Instagram</button>
+<button onclick="resetAll()">Coba Lagi</button>
+</div>
+</div>
+</div><script>
+const elements={
+ Api:{d:"Membakar, mendominasi, dan memusnahkan",dom:["Api Membara","Neraka Api","Matahari","Api Penghancur","Api Primordial"],s:["Agresif","Emosional","Dominion"]},
+ Air:{d:"Aliran tanpa akhir yang menenggelamkan segalanya",dom:["Arus Dalam","Samudra Abadi","Tsunami Jiwa"],s:["Tenang","Mengalir","Adaptif"]},
+ Kayu:{d:"Pertumbuhan, regenerasi, dan kehidupan",dom:["Akar Dunia","Hutan Abadi","Pohon Primordial"],s:["Sabar","Bertahan","Vital"]},
+ Tanah:{d:"Pertahanan mutlak dan kekuatan dasar",dom:["Tanah Besi","Gunung Abadi","Inti Dunia"],s:["Kokoh","Stabil","Tak Tergoyahkan"]},
+ Petir:{d:"Kecepatan dan kehancuran surgawi",dom:["Petir Langit","Hukuman Surga","Guntur Abadi","Petir Kekacauan"],s:["Cepat","Brutal","Tak Sabar","Menghancurkan"]},
+ Angin:{d:"Kebebasan dan kecepatan absolut",dom:["Angin Kosong","Badai Abadi","Langit Tak Berbatas"],s:["Bebas","Cepat","Tajam"]},
+ Es:{d:"Membekukan makhluk, jiwa, dan waktu",dom:["Es Beku","Salju Abadi","Es Neraka","Es Waktu","Es Abadi"],s:["Dingin","Tenang","Tanpa Emosi","Absolute"]},
+ Kabut:{d:"Ilusi, kebingungan, dan penyamaran",dom:["Kabut Tipu","Kabut Kehilangan","Kabut Abadi"],s:["Licik","Sunyi","Menipu"]},
+ Kegelapan:{d:"Menelan cahaya dan harapan",dom:["Bayangan","Malam Abadi","Kehampaan","Iblis","Kegelapan Tak Berujung"],s:["Kejam","Licik","Sunyi","Tanpa Belas Kasihan"]},
+ Cahaya:{d:"Pemurnian dan keadilan mutlak",dom:["Cahaya Suci","Pembersihan","Malaikat","Keadilan","Cahaya Absolut"],s:["Tegas","Adil","Tenang","Melindungi"]},
+ Darah:{d:"Kegilaan, pengorbanan, dan kekuatan terlarang",dom:["Darah Kutukan","Lautan Darah","Darah Primordial"],s:["Gila","Agresif","Haus Darah"]},
+ Jiwa:{d:"Menghancurkan mental dan eksistensi",dom:["Jiwa Mati","Roh Terikat","Samsara","Jiwa Iblis"],s:["Misterius","Menekan Mental","Mengintimidasi"]},
+ Void:{d:"Ketiadaan mutlak dan kehampaan eksistensi",dom:["Kehampaan","Tanpa Bentuk","Nol Mutlak","Void Origin"],s:["Sunyi","Mutlak","Tak Tertebak"]},
+ Waktu:{d:"Mengendalikan sebab dan akibat",dom:["Aliran Waktu","Chronos","Waktu Abadi"],s:["Visioner","Tenang","Dingin"]},
+ Ruang:{d:"Memotong jarak dan dimensi",dom:["Retakan Ruang","Dimensi Retak","Ruang Absolut"],s:["Presisi","Dingin","Mutlak"]},
+ Ilusi:{d:"Menipu realita dan persepsi",dom:["Mimpi Palsu","Ilusi Abadi","Cermin Jiwa"],s:["Licik","Tenang","Manipulatif"]},
+ Gravitasi:{d:"Tekanan absolut dan kehancuran massa",dom:["Tarikan Neraka","Inti Gravitasi","Singularitas"],s:["Menekan","Berat","Mutlak"]},
+ YinYang:{d:"Keseimbangan kehancuran dan penciptaan",dom:["Dualitas","Siklus Yin-Yang","Harmoni Absolut"],s:["Seimbang","Tenang","Tak Terbaca"]}
+};
+const goals=["Balas Dendam","Ketenangan Mutlak","Menjadi Terkuat","Melindungi Seseorang","Mengubah Takdir","Mencapai Keabadian","Menjadi Puncak","Mencari Keadilan","Menjadi Entitas Tertinggi","Menjalani Kehidupan Yang Tenang","Menjadi Ketua Sekte","Menjadi Ketua Kultus Demon","Menjadi Keadilan Itu Sendiri","Mencapai Titik Kultivasi Tertinggi","Menjadi Tak Terkalahkan","Mencapai Keabadian"];
+const realms=[{n:"Qi Initiate",l:1,h:9},{n:"Spirit Master",l:30,h:39},{n:"Spirit Venerable",l:80,h:89},{n:"Spirit Saint",l:90,h:99},{n:"Origin Overlord",l:280,h:400}];
+const pot=["D","C","B","A","S","SS","SSS","SSS+"];
+const moti=["Jalan menuju puncak selalu sunyi.","Takdir tunduk pada mereka yang bertahan.","Kau belum kalah selama masih berdiri."];
+
+let step=1;
+function next(){
+ document.getElementById('s'+step)?.classList.add('hidden');
+ step++;
+ document.getElementById('s'+step)?.classList.remove('hidden');
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+
+const el=document.getElementById('element');
+Object.keys(elements).forEach(e=>el.innerHTML+=`<option>${e}</option>`);
+el.onchange=()=>{
+ edesc.innerText=elements[el.value].d;
+ sifat.innerHTML='';
+ elements[el.value].s.forEach(s=>{
+  sifat.innerHTML+=`<label><input type="checkbox" value="${s}"> ${s}</label>`;
+ });
+};
+el.onchange();
+
+goals.forEach(g=>goal.innerHTML+=`<option>${g}</option>`);
+
+function generate(){
+ document.getElementById('s6').classList.add('hidden');
+ document.getElementById('result').classList.remove('hidden');
+ let r=realms[Math.floor(Math.random()*realms.length)];
+ let lvl=Math.floor(Math.random()*(r.h-r.l+1))+r.l;
+ let ras='Manusia';
+ if(q1.value&&q2.value) ras='Manusia Terpilih';
+ let domArr=elements[el.value].dom;
+ let domPick=domArr[Math.floor(Math.random()*domArr.length)];
+ let sifatP=[...document.querySelectorAll('#sifat input:checked')].map(x=>x.value).join(', ')||'Netral';
+ let potP=pot[Math.floor(Math.random()*pot.length)];
+ out.innerHTML=`Nama: ${nama.value}<br>Elemen: ${el.value}<br>Domain: ${domPick}<br>Sifat: ${sifatP}<br>Ranah: ${r.n}<br>Level: ${lvl}<br>Ras: ${ras}<br>Tujuan: ${goal.value}<br>Potensi: ${potP}`;
+ mot.innerText=moti[Math.floor(Math.random()*moti.length)];
+}
+function resetAll(){location.reload()}
+function shareWA(){window.open(`https://wa.me/?text=${encodeURIComponent(out.innerText)}`)}
+function shareIG(){alert('Screenshot hasilmu lalu upload ke IG Story.')}
+</script></body>
+</html>
